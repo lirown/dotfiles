@@ -1,6 +1,6 @@
 call plug#begin('~/.config/nvim/bundle')
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug '/usr/local/opt/fzf'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'scrooloose/nerdtree'
 Plug 'Xuyuanp/nerdtree-git-plugin'
@@ -18,24 +18,25 @@ Plug 'ryanoasis/vim-devicons' " Icons for NERDTree
 "Plug 'ludovicchabant/vim-gutentags' " Tags
 Plug 'terryma/vim-smooth-scroll'
 Plug 'puremourning/vimspector' " Debugger
+Plug 'prettier/vim-prettier' " Formmater
+Plug 'dense-analysis/ale' " Check syntax
 
 call plug#end()
 
+set encoding=UTF-8
 
 " --------- IntelliSense --
 " gives you a list for multiple defs and jumps immediately for single def
 "noremap <C-]> g<C-]>
 
 let g:gutentags_cache_dir = '~/.devtags'
-" go to definition
 nmap <silent> gd <Plug>(coc-definition)
-" go to type definition
-nmap <silent> gy <Plug>(coc-type-definition)
-" go to implementation
-nmap <silent> gi <Plug>(coc-implementation)
-" display references
-nmap <silent> gr <Plug>(coc-references)
+map <silent> gy <Plug>(coc-type-definition)
+map <silent> gi <Plug>(coc-implementation)
+map <silent> gr <Plug>(coc-references)
 
+" coc ignore noise
+let g:coc_disable_startup_warning = 1
 " coc config
 let g:coc_global_extensions = [
   \ 'coc-snippets',
@@ -48,9 +49,8 @@ let g:coc_global_extensions = [
   \ 'coc-css',
   \ 'coc-python',
   \ 'coc-angular',
-  \ 'coc-flutter',
   \ 'coc-tabnine',
-  \ 'coc-rls'
+  \ 'coc-flutter',
   \ ]
 " tab completion
 inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
@@ -62,39 +62,29 @@ let g:vimspector_enable_mappings = 'HUMAN'
 "packadd! vimspector
 
 " ---------- Custom Hotkeys -
-let mapleader = "," " map leader key as ,
-" jj -> exit insert mode
+let mapleader = ","
 :imap jj <Esc>
-" spacebar x2 -> types : to begin command
 :nmap <Space><Space> :
 " Search directory
-" shift+p -> search file names some rules in .zshrc and .rgignore
-:nmap <S-p> :Files<Cr>
-" shift+f -> search in files
-:nmap <S-f> :Ag<Cr>
-" ,b -> Pulls up opened Buffers
+" search file names some rules in .zshrc and .rgignore
+:nmap ++ :Files<Cr>
+" search in files
+:nmap -- :Ag<Cr>
+" Pulls up opened Buffers
 :nmap <leader>b :Buffers<Cr>
-" ,sa -> splits current buffer horizontally
+
 :nmap <leader>sa :botright split<Cr>
-" ,vsa -> splits current buffer vertically
 :nmap <leader>vsa :botright vspli<Cr>
 
 " ---------- Terminal Controls ----
-" ,vt -> opens terminal in nvim split vertically
 :nmap <leader>vt :vsplit term://zsh<Cr>
-" ,ht -> opens terminal in nvim split horizontally
 :nmap <leader>ht :split term://zsh<Cr>
-" jj -> in terminal also exit insert mode
 :tnoremap jj <C-\><C-n> " Exit Insert Mode
 
 " --------- Smooth Scroll ----
-"  ctrl+u -> smooth scroll half page up
 noremap <silent> <c-u> :call smooth_scroll#up(&scroll, 0, 2)<CR>
-"  ctrl+d -> smooth scroll half page down
 noremap <silent> <c-d> :call smooth_scroll#down(&scroll, 0, 2)<CR>
-"  ctrl+b -> smooth scroll full page up
 noremap <silent> <c-b> :call smooth_scroll#up(&scroll*2, 0, 4)<CR>
-"  ctrl+b -> smooth scroll full page down
 noremap <silent> <c-f> :call smooth_scroll#down(&scroll*2, 0, 4)<CR>
 
 
@@ -103,9 +93,9 @@ set encoding=utf8
 set autoindent
 set smartindent
 set smarttab
-set shiftwidth=4
-set softtabstop=4
-set tabstop=4
+set shiftwidth=2
+set softtabstop=2
+set tabstop=2
 set expandtab
 set clipboard=unnamed
 set autoindent
@@ -120,9 +110,9 @@ set autoread " refreshes changes if buffer opened was changed other places
 autocmd BufWritePre * %s/\s\+$//e "Auto-remove trailing whitespace on save
 
 " ================ Git ==============================
-" ,g -> Opens Git Blame buffer
+" Git Blame
 nnoremap <Leader>g :Gblame<Cr>
-" ,gd -> opens git diff buffer for current buffer
+" Fugitive Conflict Resolution
 nnoremap <leader>gd :Gvdiff<CR>
 nnoremap gdh :diffget //2<CR>
 nnoremap gdl :diffget //3<CR>
@@ -130,7 +120,6 @@ nnoremap gdl :diffget //3<CR>
 " --------- NERDTree ---------
 autocmd vimenter * if !argc() | NERDTree | endif "open NERDTree by default
 autocmd VimEnter * wincmd p "change focus away from NERDTree pane
-" ctrl+n -> open NERDTree to current file's location
 :map <C-n> :NERDTreeFind<Cr>
 let NERDTreeShowHidden=1 " show hidden files in NERDTree
 set conceallevel=3 " to hide brackets on dev icons
@@ -139,7 +128,30 @@ let g:webdevicons_conceal_nerdtree_brackets = 1 " whether or not to show the ner
 
 " ---------- Theme ---------
 " Display tabs and trailing spaces visually
-set list listchars=tab:\ \ ,trail:·
 colorscheme gruvbox
 syntax enable
 
+" Disable arrow keys in normal mode - helps getting used to better movement
+" keys
+nnoremap <Left>  :echoe "Use h"<CR>
+nnoremap <Right> :echoe "Use l"<CR>
+nnoremap <Up>    :echoe "Use k"<CR>
+nnoremap <Down>  :echoe "Use j"<CR>
+" Quicker tab movement
+nnoremap <A-¬¨> gt
+nnoremap <A-l> gT
+" Quicker window movement
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+nnoremap \| :vsp<CR>
+nnoremap _ :sp<CR>
+nnoremap ? :vsp<CR>:terminal<CR>A
+nnoremap <C-?> :sp<CR>:terminal<CR>A
+" Control-T for new tab
+nnoremap <C-t> :tabnew<CR>
+" Re-bind <C-f> for searching with grep (<C-d> is used for scrolling)
+nnoremap <C-f> :FZF<CR>
+" Exit terminal mode
+tnoremap kj <C-\><C-n>
